@@ -1,0 +1,29 @@
+#include<stdio.h>
+
+    int main ()
+{
+    printf("请输入5个整数\n");
+    int A[5];
+    int i;
+    for (i=0;i<5;i++)
+    {
+    scanf ("%d",&A[i]);
+    }
+
+    printf("\n");
+
+    int *p;
+    p=A;
+
+    for (i=0;i<5;i++,p++)
+    {
+    printf("A[%d]的值为：%d\n",i,A[i]);
+    printf("A[%d]的地址为：%p\n",i,p);
+    printf("\n");
+    }
+
+    return 0;
+
+
+
+}
