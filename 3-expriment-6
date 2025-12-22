@@ -1,0 +1,16 @@
+#include<stdio.h>
+
+int main(){
+
+
+
+int two_dim_array_access(int *x, int i, int j, int m, int n, int C) {
+    
+    int *base = x - (i * C + j);
+    
+    int *target = base + (m * C + n);
+
+    
+    return *target;
+}
+}      //问了ai,拿指针做的                    
