@@ -1,0 +1,21 @@
+#include<stdio.h>
+
+    int main ()
+{
+    int a,b;
+    int *p;
+    a=5;
+    p=&a;
+
+    printf("a的值为：%d\n",a);
+    printf("a的地址为：%p\n",&a);
+    printf("P指向的地址是：%p\n",p);
+    printf("*p的值为：%d\n",*p);
+
+    p=&b;
+    b=b+10;
+    printf("b的值为：%d\n",*p);
+
+    return 0;
+
+}
