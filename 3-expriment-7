@@ -1,0 +1,77 @@
+#include<stdio.h>
+
+    int main()
+{
+    int i;
+    int j;
+    int x;
+    int y;
+
+    char A[6][5] =
+       {
+       {‘S’,’D’,’U’,’Y’,’E’,’S’},
+       {‘C’,’H’,’I’,’N’,’A’,’!’},
+       {‘A’,’F’,’T’,’E’,’R’,’X’},
+       {‘h’,’e’,’r’,’o’,’a’,’b’},
+       {‘C’,’y’,’y’,’D’,’S’,’!’}
+       }
+
+    for (i=0;i<5;i++)
+      {
+           for (j=0;j<6;j++)
+             {
+                  for (x=0;x<6;x++)
+                  {
+                      if (A[i][x]>A[i][x+1])
+                      {
+                          char t=A[i][x];
+                          A[i][x]=A[i][x+1];
+                          A[i][x+1]=char t;
+
+                      }
+
+                  }
+             }
+
+
+       }
+
+    int row[5];
+    for (i=0;i<5;i++)
+      {
+      for (j=0;j<6;j++)
+
+      {
+          row[i] += A[i][j];
+}
+
+      }
+
+      for (y=0;y<5;y++)
+
+      {
+          if (row[y]<row[y+1])
+          {
+              int z=row[y];
+              row[y]=row[y+1];
+              row[y+1]=int z;
+
+              char t=A[i][x];
+              A[i][x]=A[i][x+1];
+              A[i][x+1]=char t;
+
+           }
+
+
+          }
+
+        for(i = 0; i < 5; i++) {
+        for(j = 0; j < 6; j++) {
+            printf("%c ", A[i][j]);
+        }
+        printf("\n");
+    }
+
+    return 0;
+
+}
