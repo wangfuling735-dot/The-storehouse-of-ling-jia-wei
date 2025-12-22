@@ -1,0 +1,45 @@
+#include<stdio.h>
+
+    int main()
+{
+    int n;
+    int i=0;
+    int x=0;
+    int y=0;
+
+    printf("请决定你的数组元素的个数\n");
+
+    scanf("%d",&n);
+
+    int shuzu[n];
+
+    printf("请输入相应个数个整数，输入后请回车，我将为它们排序，从小到大\n");
+
+    for (i=0;i<n;i++){scanf("%d",&shuzu[i]);}
+
+    for (i=0;i<n;i++)
+
+    {
+
+        for (x=0;x<n;x++)
+
+        {
+            if (shuzu[x]>shuzu[x+1])
+
+            {
+                y=shuzu[x];
+                shuzu[x]=shuzu[x+1];
+                shuzu[x+1]=y;
+
+            }
+
+        }
+
+    }
+
+    for (i=0;i<n;i++){printf("%d",shuzu[i]);}
+
+    printf("\n");
+
+    return 0;
+}
