@@ -1,0 +1,22 @@
+#include<stdio.h>
+    int x;
+    int y=2;
+    int main(){
+    printf("请输入任意一个数，我将判断它是否为素数\n");
+    scanf("%d",&x);
+    if(x==1){printf("你输入的数不是素数");}
+    if (x==2){printf("你输入的数是素数");}
+    else{
+    while (y<x){
+    if (x%y==0){
+    printf("你输入的数不是素数\n");
+    break;
+    }
+    else{y=y+1;}
+    }
+    if (y>=x){
+    printf("你输入的数是素数\n");
+    return 0;
+    }
+    }
+    }
