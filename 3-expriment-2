@@ -1,0 +1,21 @@
+#include<stdio.h>
+
+    int main()
+{
+    int count[10]={0};
+
+    int x;
+
+    int i;
+
+    printf("输入十个从0到9数，我将计算他们出现的频率\n");
+
+    for (i=0;i<10;i++){scanf("%d",&x);
+                       count[x]++;
+                                      }
+
+    for (i=0;i<10;i++){printf("数字%d出现了%d次\n",i,count[i]);}
+
+    return 0;
+
+}
