@@ -1,0 +1,11 @@
+#include<stdio.h>
+    int main (){
+    int x;
+    printf("请输入年份");
+    scanf("%d\n",&x);
+    if (x%400==0){
+    printf("有29天的2月 ");
+    }
+    else printf("只有28天的2月");
+
+     }
