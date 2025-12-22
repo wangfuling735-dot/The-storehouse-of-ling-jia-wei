@@ -1,0 +1,16 @@
+#include<stdio.h>
+    int x;
+    int y=1;
+    int z=0;
+    int main(){
+    printf("请输入一个数");
+    scanf("%d",&x);
+    while (y<=x){
+    z=z+y;
+    y=y+1;
+    }
+
+    printf("你输入的数由1累加得：%d\n",z);
+    return 0;
+
+    }
