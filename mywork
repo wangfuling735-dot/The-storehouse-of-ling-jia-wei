@@ -1,0 +1,25 @@
+#include<stdio.h>
+    int main(){
+    int x;
+    int y;
+    int z;
+    int min;
+    printf("请输入三个数字：");
+    scanf("%d %d %d",&x,&y,&z);
+    if (x<=y&&x<=z )
+    {
+            min=x;}
+    else if (y<=x&&y<=z)
+    {
+            min=y;}
+    else
+    {
+            min=z;
+    }
+
+
+    printf("三个数中最小的是：%d\n",min);
+    return 0;
+
+
+}
