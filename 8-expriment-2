@@ -1,0 +1,401 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+
+// 定义方向
+#define UP 1
+#define DOWN 2
+#define LEFT 3
+#define RIGHT 4
+
+// 定义地图大小
+#define WIDTH 20
+#define HEIGHT 15
+
+// 定义蛇身
+typedef struct SnakeNode {
+    int x;
+    int y;
+    struct SnakeNode* next;
+} SnakeNode;
+
+// 定义蛇结构体
+typedef struct {
+    SnakeNode* head;
+    SnakeNode* tail;
+    int length;
+    int direction;
+} Snake;
+
+// 定义食物
+typedef struct {
+    int x;
+    int y;
+} Food;
+
+
+Snake snake;
+Food food;
+int score = 0;
+int gameOver = 0;
+
+//函数
+void initGame();
+void drawMap();
+void generateFood();
+void moveSnake();
+void changeDirection(char key);
+int checkCollision();
+void freeSnake();
+int kbhit(void);
+void clearScreen();
+void hideCursor();
+void showCursor();
+
+// 非阻塞输入检测
+int kbhit(void) {
+    struct termios oldt, newt;
+    int ch;
+    int oldf;
+    
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+    
+    ch = getchar();
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    fcntl(STDIN_FILENO, F_SETFL, oldf);
+    
+    if (ch != EOF) {
+        ungetc(ch, stdin);
+        return 1;
+    }
+    
+    return 0;
+}
+
+// 清屏
+void clearScreen() {
+    printf("\033[2J\033[H");
+}
+
+// 隐藏光标
+void hideCursor() {
+    printf("\033[?25l");
+}
+
+// 显示光标
+void showCursor() {
+    printf("\033[?25h");
+}
+
+// 移动光标到指定位置
+void gotoxy(int x, int y) {
+    printf("\033[%d;%dH", y + 1, x + 1);
+}
+
+// 初始化游戏
+void initGame() {
+    // 初始化蛇
+    snake.head = (SnakeNode*)malloc(sizeof(SnakeNode));
+    snake.head->x = WIDTH / 2;
+    snake.head->y = HEIGHT / 2;
+    snake.head->next = NULL;
+    snake.tail = snake.head;
+    snake.length = 1;
+    snake.direction = RIGHT;
+    
+    // 生成第一个食物
+    srand(time(NULL));
+    generateFood();
+    
+    // 初始化分数
+    score = 0;
+    gameOver = 0;
+}
+
+// 绘制地图和游戏元素
+void drawMap() {
+    clearScreen();
+    
+    // 绘制上边框
+    printf("\033[1;36m"); // 青色
+    for (int i = 0; i < WIDTH + 2; i++) {
+        printf("█");
+    }
+    printf("\033[0m\n");
+    
+    // 绘制地图内容
+    for (int y = 0; y < HEIGHT; y++) {
+        printf("\033[1;36m█\033[0m"); // 左边框
+        for (int x = 0; x < WIDTH; x++) {
+            int printed = 0;
+            
+            // 检查是否是蛇头
+            if (x == snake.head->x && y == snake.head->y) {
+                printf("\033[1;32m●\033[0m"); // 绿色粗体
+                printed = 1;
+            }
+            // 检查是否是蛇身
+            else {
+                SnakeNode* current = snake.head->next;
+                while (current != NULL) {
+                    if (x == current->x && y == current->y) {
+                        printf("\033[32m○\033[0m"); // 绿色
+                        printed = 1;
+                        break;
+                    }
+                    current = current->next;
+                }
+            }
+            
+            // 检查是否是食物
+            if (!printed && x == food.x && y == food.y) {
+                printf("\033[1;31m★\033[0m"); // 红色粗体
+                printed = 1;
+            }
+            
+            // 如果是空位置
+            if (!printed) {
+                printf(" ");
+            }
+        }
+        printf("\033[1;36m█\033[0m\n"); // 右边框
+    }
+    
+    // 绘制下边框
+    printf("\033[1;36m");
+    for (int i = 0; i < WIDTH + 2; i++) {
+        printf("█");
+    }
+    printf("\033[0m\n");
+    
+    // 显示分数和操作说明
+    printf("\n\033[1;33m分数: %d\033[0m\n", score);
+    printf("\033[1;34m操作: W(上) A(左) S(下) D(右)\033[0m\n");
+    printf("\033[1;35m蛇的长度: %d\033[0m\n", snake.length);
+    printf("\033[1;31m按ESC键退出游戏\033[0m\n");
+    
+    fflush(stdout); // 刷新输出缓冲区
+}
+
+// 生成食物
+void generateFood() {
+    int validPosition = 0;
+    
+    while (!validPosition) {
+        food.x = rand() % WIDTH;
+        food.y = rand() % HEIGHT;
+        validPosition = 1;
+        
+        // 检查食物是否生成在蛇身上
+        SnakeNode* current = snake.head;
+        while (current != NULL) {
+            if (food.x == current->x && food.y == current->y) {
+                validPosition = 0;
+                break;
+            }
+            current = current->next;
+        }
+    }
+}
+
+// 移动蛇
+void moveSnake() {
+    // 创建新的头节点
+    SnakeNode* newHead = (SnakeNode*)malloc(sizeof(SnakeNode));
+    newHead->x = snake.head->x;
+    newHead->y = snake.head->y;
+    
+    // 根据方向移动新头的位置
+    switch (snake.direction) {
+        case UP:
+            newHead->y--;
+            break;
+        case DOWN:
+            newHead->y++;
+            break;
+        case LEFT:
+            newHead->x--;
+            break;
+        case RIGHT:
+            newHead->x++;
+            break;
+    }
+    
+    // 将新头连接蛇身
+    newHead->next = snake.head;
+    snake.head = newHead;
+    
+    // 检查是否吃到食物
+    if (snake.head->x == food.x && snake.head->y == food.y) {
+        score += 10;
+        snake.length++;
+        generateFood(); // 生成新食物
+    } else {
+        // 如果没有吃到食物，删除尾部节点
+        SnakeNode* current = snake.head;
+        while (current->next->next != NULL) {
+            current = current->next;
+        }
+        free(current->next);
+        current->next = NULL;
+        snake.tail = current;
+    }
+}
+
+// 改变方向
+void changeDirection(char key) {
+    switch (key) {
+        case 'w':
+        case 'W':
+            if (snake.direction != DOWN)
+                snake.direction = UP;
+            break;
+        case 's':
+        case 'S':
+            if (snake.direction != UP)
+                snake.direction = DOWN;
+            break;
+        case 'a':
+        case 'A':
+            if (snake.direction != RIGHT)
+                snake.direction = LEFT;
+            break;
+        case 'd':
+        case 'D':
+            if (snake.direction != LEFT)
+                snake.direction = RIGHT;
+            break;
+    }
+}
+
+// 检查碰撞
+int checkCollision() {
+    // 检查是否撞墙
+    if (snake.head->x < 0 || snake.head->x >= WIDTH ||
+        snake.head->y < 0 || snake.head->y >= HEIGHT) {
+        return 1;
+    }
+    
+    // 检查是否撞到自己
+    SnakeNode* current = snake.head->next;
+    while (current != NULL) {
+        if (snake.head->x == current->x && snake.head->y == current->y) {
+            return 1;
+        }
+        current = current->next;
+    }
+    
+    return 0;
+}
+
+// 释放蛇身内存
+void freeSnake() {
+    SnakeNode* current = snake.head;
+    while (current != NULL) {
+        SnakeNode* next = current->next;
+        free(current);
+        current = next;
+    }
+}
+
+// 主函数
+int main() {
+    char key;
+    
+    // 设置终端为原始模式
+    struct termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    
+    // 隐藏光标
+    hideCursor();
+    
+    // 初始化游戏
+    initGame();
+    
+    // 显示开始界面
+    clearScreen();
+    printf("\n\n");
+    printf("    \033[1;32m╔══════════════════════════════╗\033[0m\n");
+    printf("    \033[1;32m║      贪吃蛇游戏             ║\033[0m\n");
+    printf("    \033[1;32m║                              ║\033[0m\n");
+    printf("    \033[1;32m║  按任意键开始游戏           ║\033[0m\n");
+    printf("    \033[1;32m║                              ║\033[0m\n");
+    printf("    \033[1;32m║  操作说明:                  ║\033[0m\n");
+    printf("    \033[1;32m║  W/A/S/D - 控制方向         ║\033[0m\n");
+    printf("    \033[1;32m║  ESC     - 退出游戏         ║\033[0m\n");
+    printf("    \033[1;32m╚══════════════════════════════╝\033[0m\n");
+    printf("\n");
+    fflush(stdout);
+    
+    // 等待任意键开始
+    getchar();
+    
+    // 游戏主循环
+    while (!gameOver) {
+        // 绘制地图
+        drawMap();
+        
+        // 检查按键输入
+        if (kbhit()) {
+            key = getchar();
+            if (key == 27) { // ESC键
+                break;
+            }
+            changeDirection(key);
+            
+            // 清空输入缓冲区
+            while (kbhit()) getchar();
+        }
+        
+        // 移动蛇
+        moveSnake();
+        
+        // 检查碰撞
+        if (checkCollision()) {
+            gameOver = 1;
+            break;
+        }
+        
+        // 控制游戏速度
+        usleep(200000); // 200毫秒
+    }
+    
+    // 恢复终端设置
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    
+    // 显示光标
+    showCursor();
+    
+    // 游戏结束
+    clearScreen();
+    printf("\n\n");
+    printf("    \033[1;31m╔══════════════════════════════╗\033[0m\n");
+    printf("    \033[1;31m║       游戏结束！            ║\033[0m\n");
+    printf("    \033[1;31m║                              ║\033[0m\n");
+    printf("    \033[1;31m║  最终分数: %-16d  ║\033[0m\n", score);
+    printf("    \033[1;31m║  蛇的长度: %-16d  ║\033[0m\n", snake.length);
+    printf("    \033[1;31m║                              ║\033[0m\n");
+    printf("    \033[1;31m║  按任意键退出...            ║\033[0m\n");
+    printf("    \033[1;31m╚══════════════════════════════╝\033[0m\n");
+    fflush(stdout);
+    
+    // 等待按键
+    getchar();
+    
+    // 释放内存
+    freeSnake();
+    
+    return 0;
+}
